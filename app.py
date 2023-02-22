@@ -12,12 +12,11 @@ def is_overlap(bb1, bb2):
 def tracking():
     model = DamageHelper('yolov5s6_openvino_model/yolov5s6.xml')
     roi = [530, 360, 1100, 365]
-    cap = cv2.VideoCapture('video1.mp4')
-    
+    class_name = ['PERSON', 'BICYCLE', 'CAR', 'MOTORCYCLE', 'AIRPLANE', 'BUS', 'TRAIN', 'TRUCK']
     frames = []
     show_fps = False
     count = [[] for _ in range(8)]
-    class_name = ['PERSON', 'BICYCLE', 'CAR', 'MOTORCYCLE', 'AIRPLANE', 'BUS', 'TRAIN', 'TRUCK']
+    cap = cv2.VideoCapture('video1.mp4')
     while cap.isOpened():
         ret, frame = cap.read()
         t = time.time()
@@ -40,7 +39,7 @@ def tracking():
                 cv2.putText(frame, f'{d.tracker_id}: {class_name[d.class_id]}', org=(x1+2, y1+15), 
                             fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale=.5, 
                             color=(0, 255, 0), thickness=2)
-                x, y = int(d.rect.center.x), int(d.rect.center.y)
+
                 if is_overlap(roi, [x1, y1, x2, y2]):
                     # print('**** overlap ****')
                     if d.tracker_id not in count[d.class_id]:

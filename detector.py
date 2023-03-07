@@ -1,6 +1,5 @@
 import cv2
 
-
 class Detector:
     def __init__(self, core, model_path, thr=0.2, device='CPU'):
         self.thr = thr
@@ -40,7 +39,7 @@ class Detector:
     def _infer(self, prep_img):
         input_data = {self.input_tensor_name: prep_img}
         output = self.infer_request.infer(input_data)[self.output_tensor]
-        return output[0][0]
+        return output[0,0,:,1:]
 
     def _postprocess(self, bboxes):
         def coord_translation(bbox):
@@ -50,9 +49,7 @@ class Detector:
             ymax = int(self._h * bbox[5])
             return [xmin, ymin, xmax, ymax, bbox[1], int(bbox[0]-1)]
 
-        bboxes_new = [coord_translation(bbox[1:]) for bbox in bboxes if 1 <= bbox[1] <= 3 and bbox[2] > self.thr]
-
-        return bboxes_new
+        return [coord_translation(bbox) for bbox in bboxes if 1 <= bbox[0] and bbox[1] > self.thr]
 
     def detect(self, img):
         img = self._preprocess(img)

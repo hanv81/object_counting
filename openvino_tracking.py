@@ -4,20 +4,21 @@ import numpy as np
 from tracker import track
 from openvino.runtime import Core
 from detector import Detector
+from shapely.geometry import LineString,Polygon
 
 class_name = ['PERSON', 'VEHICLE', 'BIKE']
-roi = [530, 360, 1100, 365]
+roi_x1, roi_y1, roi_x2, roi_y2 = 530, 400, 1030, 355
+roi_line = LineString([(roi_x1, roi_y1), (roi_x2, roi_y2)])
 model_path = 'FP16/person-vehicle-bike-detection-crossroad-0078.xml'
 video_path = 'video1.mp4'
+make_video = False
 
-def is_overlap(bb1, bb2):
-    xx = min(bb1[2], bb2[2]) > max(bb1[0], bb2[0])  # the smaller of the largest x-coordinates is larger than the larger of the smallest x-coordinates
-    yy = min(bb1[3], bb2[3]) > max(bb1[1], bb2[1])  # the smaller of the largest y-coordinates is larger than the larger of the smallest y-coordinates
-    return xx and yy
+def is_overlap(line, bbox):
+    x1,y1,x2,y2 = bbox
+    return line.intersects(Polygon(((x1,y1), (x2,y1), (x2,y2), (x1,y2))))
 
 def tracking():
     show_fps = False
-    make_video = False
     frames = []
     count = [[] for _ in range(3)]
     detector = Detector(Core(), model_path)
@@ -45,11 +46,11 @@ def tracking():
                             fontFace = cv2.FONT_HERSHEY_SIMPLEX, fontScale=.5, 
                             color=(0, 255, 0), thickness=2)
 
-                if is_overlap(roi, [x1, y1, x2, y2]):
+                if is_overlap(roi_line, [x1, y1, x2, y2]):
                     if d.tracker_id not in count[d.class_id]:
                         count[d.class_id].append(d.tracker_id)
 
-        cv2.rectangle(frame, (roi[0], roi[1]), (roi[2], roi[3]), (0,255,0), 3)
+        cv2.line(frame, (roi_x1, roi_y1), (roi_x2, roi_y2), (0,255,0), 3)
 
         y=28
         for i,cls_name in enumerate(class_name):
@@ -68,6 +69,8 @@ def tracking():
 
     cap.release()
     cv2.destroyAllWindows()
+    for i,cls_name in enumerate(class_name):
+        print(f'{cls_name}: {len(count[i])}')
 
     if make_video:
         print('Making video ...')

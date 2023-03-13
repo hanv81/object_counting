@@ -12,6 +12,7 @@ roi_line = LineString([(roi_x1, roi_y1), (roi_x2, roi_y2)])
 model_path = 'FP16/person-vehicle-bike-detection-crossroad-0078.xml'
 video_path = 'video1.mp4'
 make_video = False
+draw_model_detect = True
 
 def is_overlap(line, bbox):
     x1,y1,x2,y2 = bbox
@@ -35,6 +36,9 @@ def tracking():
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
         results = detector.detect(frame)
         if results:
+            if draw_model_detect:
+                for x1, y1, x2, y2, _, _ in results:
+                    cv2.rectangle(frame, (x1+2, y1+2), (x2-2, y2-2), (0, 0, 0), 2)
             results = np.array(results, dtype=float)
             detections = track(frame, results)
             for d in detections:
